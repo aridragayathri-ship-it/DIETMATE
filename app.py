@@ -8,6 +8,13 @@ from extensions import db, login_manager
 
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
+
+    # Vercel's deployed application directory is read-only.
+    # Use /tmp for ephemeral local files; configure DATABASE_URL for
+    # persistent production storage (recommended: managed PostgreSQL).
+    if os.environ.get("VERCEL"):
+        app.instance_path = "/tmp/dietmate-instance"
+
     app.config.from_object(config_class)
     app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
     app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
