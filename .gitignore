@@ -1,0 +1,17 @@
+# Python bytecode and local virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local instance data and uploads
+instance/*
+!instance/.gitkeep
+uploads/
+
+# Local tooling and environment overrides
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.coverage

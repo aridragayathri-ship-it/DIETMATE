@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Meal planner · DietMate{% endblock %}
+{% block content %}
+<div class="form-page planner-page">
+  <div class="form-page-heading">
+    <div><p class="eyebrow">A PLAN THAT FITS YOU</p><h1>Meal planner</h1><p>Personalized ideas shaped by your profile, food preferences and daily energy estimate.</p></div>
+    <form class="planner-date" method="get"><label for="planDate">Plan date</label><input id="planDate" type="date" name="date" value="{{ plan_date.isoformat() }}"><button class="outline-button">Go</button></form>
+  </div>
+  <section class="planner-summary">
+    <div class="summary-copy"><span class="panel-icon mint-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span><div><strong>{{ plan_date.strftime('%A, %B %d') }}</strong><small>{% if measured %}Profile-based estimate{% else %}Starter estimate · complete your <a href="{{ url_for('profile.edit_profile') }}">profile</a> to personalize{% endif %}</small></div></div>
+    <div class="summary-stats"><span><small>Daily energy target</small><strong>~{{ target }} <small>kcal</small></strong></span>{% if plan %}<span><small>Planned calories</small><strong>{{ total_calories }} <small>kcal</small></strong></span><span><small>Prep time</small><strong>{{ total_prep }} <small>min</small></strong></span>{% endif %}</div>
+    <form method="post" action="{{ url_for('meal.generate') }}"><input type="hidden" name="date" value="{{ plan_date.isoformat() }}"><button class="primary-button"><i class="fa-solid fa-wand-magic-sparkles"></i> {{ 'Regenerate full plan' if plan and rows else 'Create my plan' }}</button></form>
+  </section>
+  {% if not measured %}<div class="estimate-disclaimer"><i class="fa-regular fa-circle-info"></i> Calorie guidance is an estimate for planning, not a medical prescription.</div>{% endif %}
+  <section class="form-section planner-table-section">
+    <div class="planner-section-title"><div><h2>{{ 'Your scheduled meals' if plan and rows else 'Recommended meal schedule' }}</h2><p>{% if plan and rows %}Edit times and servings, or refresh an individual meal suggestion.{% else %}Recommendations are matched to each slot’s calorie share and your food preferences.{% endif %}</p></div>{% if plan and rows %}<span class="plan-badge"><i class="fa-solid fa-check"></i> SAVED</span>{% else %}<span class="plan-badge preview-badge">PREVIEW</span>{% endif %}</div>
+    <div class="table-scroll"><table class="planner-table"><thead><tr><th>Meal</th><th>Recommended dish</th><th>Planned time</th><th>Prep</th><th>Calories</th><th>Why this fits</th><th>Actions</th></tr></thead><tbody>
+    {% if plan and rows %}
+      {% for row in rows %}{% set edit_form = 'edit-meal-' ~ row.item.id %}
+      <tr>
+        <td><span class="slot-pill">{{ row.slot }}</span></td>
+        <td><a class="planner-food" href="{{ url_for('recipe.detail', food_id=row.food.id) }}">{{ row.food.name }}</a><small class="serving-note">{{ row.servings }} serving{% if row.servings != 1 %}s{% endif %} · {{ row.food.serving_size }}</small></td>
+        <td><select class="inline-select" name="meal_type" form="{{ edit_form }}">{% for slot in slots %}<option {% if slot.name == row.slot %}selected{% endif %}>{{ slot.name }}</option>{% endfor %}</select><input class="inline-time" type="time" name="planned_time" form="{{ edit_form }}" value="{{ row.time }}"></td>
+        <td>{{ row.food.preparation_minutes }} min</td><td><strong>{{ (row.food.calories * row.servings)|int }}</strong> kcal</td><td class="reason-cell">{{ row.reason or 'Manually added to your schedule.' }}</td>
+        <td class="actions-cell"><form id="{{ edit_form }}" method="post" action="{{ url_for('meal.edit_item', plan_id=plan.id, item_id=row.item.id) }}"><input type="hidden" name="food_id" value="{{ row.food.id }}"></form><input class="serving-input" type="number" name="servings" form="{{ edit_form }}" min="0.25" max="10" step="0.25" value="{{ row.servings }}" aria-label="Servings"><button class="row-action save-action" form="{{ edit_form }}" title="Save changes"><i class="fa-solid fa-check"></i></button><div class="row-actions"><form method="post" action="{{ url_for('meal.regenerate_item', plan_id=plan.id, item_id=row.item.id) }}"><button class="row-action" title="Regenerate this meal"><i class="fa-solid fa-arrows-rotate"></i></button></form><form method="post" action="{{ url_for('meal.delete_item', plan_id=plan.id, item_id=row.item.id) }}" onsubmit="return confirm('Remove this meal from your schedule?')"><button class="row-action delete-row-action" title="Remove meal"><i class="fa-regular fa-trash-can"></i></button></form></div></td>
+      </tr>{% endfor %}
+    {% else %}
+      {% for row in previews %}<tr><td><span class="slot-pill">{{ row.slot.name }}</span><small class="serving-note">{{ (row.slot.share * 100)|int }}% of target</small></td><td><a class="planner-food" href="{{ url_for('recipe.detail', food_id=row.food.id) }}">{{ row.food.name }}</a><small class="serving-note">{{ row.food.serving_size }}</small></td><td>{{ row.slot.time }}</td><td>{{ row.food.preparation_minutes }} min</td><td><strong>{{ row.food.calories|int }}</strong> kcal</td><td class="reason-cell">{{ row.reason }}</td><td><i class="fa-regular fa-lightbulb preview-action" title="Recommendation preview"></i></td></tr>{% else %}<tr><td colspan="7" class="no-plan-row">No suitable foods matched this profile. Review your preferences or add foods to your database.</td></tr>{% endfor %}
+    {% endif %}
+    </tbody></table></div>
+  </section>
+  {% if plan %}<section class="form-section add-meal-section"><div class="planner-section-title"><div><h2>Add a meal</h2><p>Choose any food that fits your current dietary settings.</p></div></div><form class="add-meal-form" method="post" action="{{ url_for('meal.add_item', plan_id=plan.id) }}"><label>Meal slot<select name="meal_type">{% for slot in slots %}<option>{{ slot.name }}</option>{% endfor %}</select></label><label>Dish<select name="food_id" required>{% for food in foods %}<option value="{{ food.id }}">{{ food.name }} · {{ food.calories|int }} kcal</option>{% endfor %}</select></label><label>Planned time<input type="time" name="planned_time" value="12:00" required></label><label>Servings<input type="number" name="servings" value="1" min="0.25" max="10" step="0.25" required></label><button class="primary-button"><i class="fa-solid fa-plus"></i> Add meal</button></form></section>{% endif %}
+  <p class="planner-footnote">Recommendations use listed nutrition per serving. Ingredient-level nutrient analysis and automated food logging are added in the nutrition phase.</p>
+</div>
+{% endblock %}

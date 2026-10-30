@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7fd"><title>{% block title %}DietMate{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="{{ url_for('dashboard.index') }}"><span class="brand-mark"><i class="fa-solid fa-leaf"></i></span><span class="brand-name">diet<span>mate</span></span></a>
+    <div class="side-label">MENU</div>
+    <nav class="side-nav" aria-label="Main navigation">
+      <a class="nav-item {{ 'active' if request.endpoint == 'dashboard.index' else '' }}" href="{{ url_for('dashboard.index') }}" title="Home"><i class="fa-solid fa-house"></i><span>Home</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'calendar.index' else '' }}" href="{{ url_for('calendar.index') }}" title="Calendar"><i class="fa-regular fa-calendar"></i><span>Calendar</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'nutrition.index' else '' }}" href="{{ url_for('nutrition.index') }}" title="Nutrition tracker"><i class="fa-solid fa-chart-pie"></i><span>Nutrition tracker</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'water.index' else '' }}" href="{{ url_for('water.index') }}" title="Water tracker"><i class="fa-solid fa-droplet"></i><span>Water tracker</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'meal.index' else '' }}" href="{{ url_for('meal.index') }}" title="Meal planner"><i class="fa-solid fa-utensils"></i><span>Meal planner</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'food.index' else '' }}" href="{{ url_for('food.index') }}" title="Food database"><i class="fa-solid fa-bowl-food"></i><span>Food database</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'shopping.index' else '' }}" href="{{ url_for('shopping.index') }}" title="Shopping list"><i class="fa-solid fa-basket-shopping"></i><span>Shopping list</span></a>
+    </nav>
+    <div class="side-label side-label-bottom">PREFERENCES</div>
+    <nav class="side-nav">
+      <a class="nav-item {{ 'active' if request.endpoint == 'notifications.index' else '' }}" href="{{ url_for('notifications.index') }}" title="Notifications"><i class="fa-regular fa-bell"></i><span>Notifications</span>{% if unread_notifications %}<b class="nav-dot"></b>{% endif %}</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'settings.index' else '' }}" href="{{ url_for('settings.index') }}" title="Settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'reports.index' else '' }}" href="{{ url_for('reports.index') }}" title="Reports"><i class="fa-solid fa-chart-line"></i><span>Reports</span></a>
+      <a class="nav-item" href="#help" title="Help"><i class="fa-regular fa-circle-question"></i><span>Help center</span></a>
+    </nav>
+    <div class="sidebar-bottom"><button class="theme-toggle" id="themeToggle"><span class="theme-icon"><i class="fa-regular fa-moon"></i></span><span>Dark mode</span><span class="switch"></span></button>
+      {% if current_user.is_authenticated %}<div class="side-user"><div class="avatar avatar-small">{{ current_user.full_name[:1]|upper }}</div><div class="user-copy"><strong>{{ current_user.full_name }}</strong><small><a href="{{ url_for('auth.logout') }}">Sign out</a></small></div><i class="fa-solid fa-ellipsis"></i></div>{% endif %}
+      <button class="collapse-btn" id="collapseSidebar" aria-label="Collapse sidebar"><i class="fa-solid fa-angles-left"></i></button>
+    </div>
+  </aside>
+  <main class="main-shell">
+    <header class="topbar"><div class="mobile-brand"><span class="brand-mark"><i class="fa-solid fa-leaf"></i></span>diet<span>mate</span></div>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="globalSearch" type="search" placeholder="Search meals, ingredients, recipes..." autocomplete="off"><kbd>⌘ K</kbd><div class="search-results" id="searchResults"></div></div>
+      <div class="top-actions"><a class="icon-button notification-button" href="{{ url_for('notifications.index') }}" aria-label="Notifications"><i class="fa-regular fa-bell"></i>{% if unread_notifications %}<span></span>{% endif %}</a><a class="profile-button" href="{{ url_for('profile.edit_profile') }}"><span class="avatar">{{ current_user.full_name[:1]|upper if current_user.is_authenticated else 'D' }}</span><span class="profile-name">{{ current_user.full_name if current_user.is_authenticated else 'Profile' }}</span><i class="fa-solid fa-chevron-down"></i></a></div>
+    </header>
+    {% block content %}{% endblock %}
+    <footer class="app-signature" aria-label="Application credit">Made by <strong>07</strong></footer>
+  </main>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash-message {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
