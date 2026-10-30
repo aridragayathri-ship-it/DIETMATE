@@ -1,4 +1,5 @@
 """DietMate Flask application entry point."""
+import os
 from pathlib import Path
 from flask import Flask, jsonify
 from flask_login import current_user
